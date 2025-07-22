@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"log"
 	"os"
+
+	"github.com/imhasandl/package-manager/archive"
+	"github.com/imhasandl/package-manager/config"
 )
 
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Println("Использование:")
-		fmt.Println("  pm create <packet.json>")
-		fmt.Println("  pm update <packages.json>")
-		return
-	}
+	fmt.Println("Использование:")
+	fmt.Println("pm create <packet.json>")
+	fmt.Println("pm update <packages.json>")
 
 	command := os.Args[1]
 
@@ -37,7 +37,19 @@ func main() {
 }
 
 func CreatePackage(configFile string) error {
-	
+	config, err := config.ReadPackageConfig(configFile)
+	if err != nil {
+		return fmt.Errorf("ошибка чтения конфига:", err)
+	}
+
+	packageName := config["name"].(string)
+	packageVersion := config["ver"].(string)
+	archiveFile := fmt.Sprintf("%s-%s.zip", packageName, packageVersion)
+
+	err = archive.CreateZipArchive(config, archiveFile)
+	if err != nil {
+		return fmt.Errorf("ошибка создания архива: %v", err)
+	}
 
 	return nil
 }
