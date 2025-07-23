@@ -16,8 +16,8 @@ func CreateZipArchive(config map[string]interface{}, archiveFile string) error {
 	}
 	defer zipFile.Close()
 
-	zipWritter := zip.NewWriter(zipFile)
-	defer zipWritter.Close()
+	zipWriter := zip.NewWriter(zipFile)
+	defer zipWriter.Close()
 
 	targets := config["targets"].([]interface{})
 
@@ -35,7 +35,7 @@ func CreateZipArchive(config map[string]interface{}, archiveFile string) error {
 			}
 		}
 
-		err := AddObjectsToZip(zipWritter, path, exclude)
+		err := AddObjectsToZip(zipWriter, path, exclude)
 		if err != nil {
 			return err
 		}
@@ -45,7 +45,7 @@ func CreateZipArchive(config map[string]interface{}, archiveFile string) error {
 	return nil
 }
 
-func AddObjectsToZip(zipWritter *zip.Writer, path, exclude string) error {
+func AddObjectsToZip(zipWriter *zip.Writer, path, exclude string) error {
 	files, err := filepath.Glob(path)
 	if err != nil {
 		return err
@@ -56,7 +56,7 @@ func AddObjectsToZip(zipWritter *zip.Writer, path, exclude string) error {
 			continue
 		}
 
-		err = AddObjectToZip(zipWritter, file)
+		err = AddObjectToZip(zipWriter, file)
 		if err != nil {
 			return err
 		}
@@ -65,14 +65,14 @@ func AddObjectsToZip(zipWritter *zip.Writer, path, exclude string) error {
 	return nil
 }
 
-func AddObjectToZip(zipWritter *zip.Writer, filename string) error {
+func AddObjectToZip(zipWriter *zip.Writer, filename string) error {
 	file, err := os.Open(filename)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
 
-	zipFile, err := zipWritter.Create(filename)
+	zipFile, err := zipWriter.Create(filename)
 	if err != nil {
 		return err
 	}
@@ -91,4 +91,54 @@ func matchesExclude(filename, exclude string) bool {
 		return strings.HasSuffix(filename, ext)
 	}
 	return false
+}
+
+func ExtractZipArchive(localPath, extractPath string) error {
+	zipReader, err := zip.OpenReader(localPath)
+	if err != nil {
+		return err
+	}
+	defer zipReader.Close()
+
+	err = os.MkdirAll(extractPath, 0755)
+	if err != nil {
+		return err
+	}
+
+	for _, file := range zipReader.File {
+		err = extractFileFromZip(file, extractPath)
+		if err != nil {
+			return err
+		}
+	}
+
+	fmt.Printf("ZIP архив распакован в: %s\n", extractPath)
+	return nil
+}
+
+func extractFileFromZip(file *zip.File, extractPath string) error {
+	zipFile, err := file.Open()
+	if err != nil {
+		return err
+	}
+	defer zipFile.Close()
+
+	targetPath := filepath.Join(extractPath, file.Name)
+
+	err = os.MkdirAll(filepath.Dir(targetPath), 0755)
+	if err != nil {
+		return err
+	}
+
+	targetFile, err := os.Create(targetPath)
+	if err != nil {
+		return err
+	}
+	defer targetFile.Close()
+
+	_, err = io.Copy(targetFile, zipFile)
+	if err != nil {
+		return err
+	}
+	return nil
 }
