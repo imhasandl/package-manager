@@ -12,19 +12,19 @@
 
 ### Установка
 ```bash
-git clone <repository-url>
-cd package-manager
-go mod tidy
-go build -o pm main.go
+  git clone <repository-url>
+  cd package-manager
+  go mod tidy
+  go build -o pm main.go
 ```
 
 ### Использование
 ```bash
-# Создать и загрузить пакет
-pm create packet.json
-
-# Установить пакеты
-pm update packages.json
+  # Создать и загрузить пакет
+  pm create packet.json
+  
+  # Установить пакеты
+  pm update packages.json
 ```
 
 ## Примеры конфигурации
